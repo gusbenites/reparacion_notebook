@@ -19,6 +19,96 @@ Cargue estos archivos con `read` según la etapa donde se encuentre la falla:
 - `references/bustamante-advanced-techniques-and-macbook.md` — Técnicas avanzadas de **Daniel Bustamante Sensei**: Reglas críticas ("¡No explotes tu mother!" al retirar un IC Buck, puentes en entrada, conflicto 19V vs Batería), **Método CAF (Corto, Abierto y con Fugas)** en capacitores/diodos/bobinas/BJT, secreto del capacitor de `ACDET` (47nF/100nF) en `BQ24780S`, detección de fallas de filtrado con botón `PEAK`, diagnóstico de **CPU/PCH/SoC muerto en 2 minutos** (por líneas USB `D+`/`D-` y Pin 8 BIOS vs VCORE), conversión de **RAM DDR3 1.5V a DDR3L 1.35V** (Offset `06`), conversión Discrete a UMA (**"La Bobina de Oro"** + Clear CMOS), truco del **"Dedo Mágico"** en Pin 22 Wi-Fi (`PLT_RST#`), diagnóstico de **MacBook (A1278/A1466: `ISL6259`, `U5110`, `U1900`, `SMC`)** y protocolo químico para placas mojadas (`Thinner Oro` + `Isopropílico`).
 - `references/metadataVE-advanced-bios-and-diagnostics.md` — Técnicas de **Leonardo García (MetadataVE)**: Edición de BIOS Dell/HP/Lenovo (extracción de DMI/Service Tag/Windows Key, limpieza ME con Intel FIT, transferencia con `Ctrl+B`), diagnóstico de EC autoprogramable vs externo, señales `SUSON#`/`SYSON`/`ACOFF`/`PACIN`/`D/C#`/`VA_OFF`/`AD_ID`/`PS_ID`/`BATT_EN#`/`EDID`/`CPU_DRAMRST#`, OPAMPS y comparadores (`LM393`), Load Switches, protocolo de reballing con estaño en pasta, reset de ciclos de batería con NLBA, y distribución de corriente (por qué inyectar 1V y no 19V).
 - `references/electrosotox-errors-and-techniques.md` — **ElectroSotox**: Los 10 errores más comunes al reparar laptops (OCP, PSID, "no todo lo que calienta está malo", medición con punta conectada primero, rango manual vs autorango, etc.), mecanismo de carga de firmware del KBC desde la BIOS principal, diagnóstico de MCP/PCH por patrón térmico, técnicas de inyección progresiva (1V→2V→3V), levantar bobinas para aislar fases, y valores de referencia rápidos.
+- `scripts/telegram_downloader.py` — Script para buscar y descargar esquemáticos/boardviews/BIOS desde canales de Telegram.
+
+---
+
+## 📥 Descarga de Esquemáticos, Boardviews y BIOS desde Telegram
+
+### Canales Disponibles
+
+| Alias | Canal | Contenido |
+| :--- | :--- | :--- |
+| `schematics` | `@schematicslaptop` | Esquemáticos (PDF) y Boardviews (.cad/.brd) |
+| `bios` | `@biosarchive` | BIOS (binarios .bin/.rom) |
+
+### Configuración Inicial (Solo una vez)
+
+1. Obtén tu **API ID** y **API Hash** en [my.telegram.org](https://my.telegram.org)
+   - Ve a "API Development Tools"
+   - Crea una nueva aplicación
+   - Copia el `api_id` y `api_hash`
+
+2. Crea el archivo de configuración:
+   ```bash
+   cd ~/.agents/skills/notebook-repair-diagnostics/scripts/
+   cp telegram_config.json.example telegram_config.json
+   # Edita telegram_config.json con tus credenciales
+   ```
+
+3. Instala la dependencia:
+   ```bash
+   pip install telethon
+   ```
+
+### Uso del Script
+
+```bash
+cd ~/.agents/skills/notebook-repair-diagnostics/scripts/
+
+# Buscar esquemático por modelo de placa
+python telegram_downloader.py search "LA-B801P" --channel schematics
+
+# Buscar BIOS por modelo
+python telegram_downloader.py search "LA-B801P" --channel bios
+
+# Descargar archivo específico (usar message_id del resultado de búsqueda)
+python telegram_downloader.py download 12345 --channel schematics
+
+# Indexar todos los archivos del canal (búsqueda offline rápida)
+python telegram_downloader.py index --channel schematics
+python telegram_downloader.py index --channel bios
+
+# Ver últimos archivos publicados
+python telegram_downloader.py recent --channel schematics --limit 50
+```
+
+### Flujo de Trabajo en el Taller
+
+1. **Llega un equipo** → Identifica el modelo de placa (ej. `LA-B801P`, `NM-B241`)
+2. **Buscar esquemático**:
+   ```bash
+   python telegram_downloader.py search "LA-B801P" --channel schematics
+   ```
+3. **Descargar** (usar `message_id` del resultado):
+   ```bash
+   python telegram_downloader.py download <message_id> --channel schematics
+   ```
+4. **Buscar BIOS** (si necesitas reprogramar):
+   ```bash
+   python telegram_downloader.py search "LA-B801P" --channel bios
+   ```
+5. **Reprogramar** con `CH341A` o `SVOD` siguiendo la guía en `metadataVE-advanced-bios-and-diagnostics.md`
+
+### Búsqueda Offline (Índice Local)
+
+Para búsquedas más rápidas sin conexión a Telegram, construye primero el índice:
+```bash
+python telegram_downloader.py index --channel schematics --limit 1000
+```
+
+Esto crea `telegram_index_schematics.json` localmente. Puedes buscar con:
+```bash
+# Buscar en el índice local
+grep -i "LA-B801P" telegram_index_schematics.json
+```
+
+### Notas Importantes
+
+- **Primera vez**: Telegram enviará un código de verificación a tu número. El script lo pedirá por consola.
+- **Sesión persistente**: La sesión se guarda en `telegram_session.session` — no necesitas volver a autenticarte.
+- **Límites de Telegram**: Respeta los límites de descarga (espera unos segundos entre descargas masivas).
+- **Los archivos se descargan a**: `downloads/schematics/` o `downloads/bios/` según el canal.
 - `references/quick-cases-routing.md` — **⚡ ENRAPIDOR DE CASOS**: Tabla de síntoma → causa probable → archivo de referencia a consultar. Úsala como punto de entrada cuando un equipo llega al taller.
 
 ---
