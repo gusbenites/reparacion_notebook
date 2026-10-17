@@ -36,6 +36,10 @@ skills/notebook-repair-diagnostics/
 
 **Total**: 306 videos, ~3.6 millones de caracteres de transcripciones técnicas.
 
+## Nota sobre el material
+
+Este skill es una **prueba de concepto**. Todo el contenido técnico fue recopilado y transcrito automáticamente utilizando **OpenCode Desktop** (agente de IA) a partir de los videos públicos de los canales de YouTube mencionados. No es un producto oficial de los creadores ni sustituye su contenido original; es una herramienta educativa/de referencia basada en su trabajo.
+
 ## Licencia
 
 Uso personal/educativo. Las transcripciones y metodologías pertenecen a sus respectivos creadores de contenido.
